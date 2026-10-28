@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { songs } from "./data/songs";
 import {
+  Leaf,
+  Moon,
   Pause,
   Play,
   Repeat,
@@ -8,9 +10,37 @@ import {
   Shuffle,
   SkipBack,
   SkipForward,
+  Sparkles,
+  Waves,
 } from "lucide-react";
 
+type Theme = "cute" | "earth" | "mature" | "blue";
+
+const themes: {
+  id: Theme;
+  label: string;
+  icon: typeof Sparkles;
+  color: string;
+}[] = [
+  { id: "blue", label: "Biru", icon: Waves, color: "#0f172a" },
+  { id: "cute", label: "Lucu", icon: Sparkles, color: "#ffe9f3" },
+  { id: "earth", label: "Bumi", icon: Leaf, color: "#e8efdd" },
+  { id: "mature", label: "Dewasa", icon: Moon, color: "#14161a" },
+];
+
+const getInitialTheme = (): Theme => {
+  const stored = localStorage.getItem("theme");
+
+  return stored === "cute" ||
+    stored === "earth" ||
+    stored === "mature" ||
+    stored === "blue"
+    ? stored
+    : "mature";
+};
+
 function App() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [currentSong, setCurrentSong] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -22,6 +52,19 @@ function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const song = songs[currentSong];
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+
+    const color = themes.find((item) => item.id === theme)?.color;
+
+    if (color) {
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", color);
+    }
+  }, [theme]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -134,8 +177,38 @@ function App() {
   }, [currentSong]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-black flex items-center justify-center p-3 sm:p-6">
-      <div className="w-full max-w-sm sm:max-w-md bg-white/10 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-2xl">
+    <div className="app-shell min-h-screen flex items-center justify-center p-3 sm:p-6">
+      <div className="player-card w-full max-w-sm sm:max-w-md p-4 sm:p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-(--muted)">
+            Theme
+          </span>
+
+          <div
+            className="flex gap-1 rounded-full p-1"
+            style={{ background: "var(--switcher-bg)" }}
+          >
+            {themes.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setTheme(item.id)}
+                  title={item.label}
+                  aria-label={`Tema ${item.label}`}
+                  aria-pressed={theme === item.id}
+                  className={`btn p-1.5 sm:p-2 ${
+                    theme === item.id ? "btn-accent" : ""
+                  }`}
+                >
+                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <img
           src={song.cover}
           alt={song.title}
@@ -147,69 +220,67 @@ function App() {
             {song.title}
           </h2>
 
-          <p className="text-sm sm:text-base text-gray-300">{song.artist}</p>
+          <p className="text-sm sm:text-base text-(--muted)">{song.artist}</p>
         </div>
 
         <div className="mt-5">
-          <div className="flex justify-between text-xs sm:text-sm text-gray-400 mt-2">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-
           <input
             type="range"
             value={progress}
             min="0"
             max="100"
             onChange={handleSeek}
-            className="w-full"
+            className="range"
+            style={{ "--value": `${progress}%` } as CSSProperties}
           />
+
+          <div className="flex justify-between text-xs sm:text-sm text-(--muted) mt-2">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
         </div>
 
-        <div className="flex justify-center items-center gap-2 sm:gap-5 mt-6">
+        <div className="flex justify-center items-center gap-2 sm:gap-3 mt-6">
           <button
             onClick={toggleShuffle}
-            className={`px-4 py-2 rounded-lg hover:bg-gray-600 ${
-              shuffle ? "bg-[#508C9B]" : "bg-gray-700"
-            }`}
+            title="Shuffle"
+            className={`btn px-4 py-2 ${shuffle ? "btn-accent" : ""}`}
           >
             <Shuffle />
           </button>
 
           <button
             onClick={prevSong}
-            className="bg-gray-700 p-2 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-600"
+            title="Sebelumnya"
+            className="btn p-2 sm:px-4 sm:py-2"
           >
             <SkipBack />
           </button>
 
           <button
             onClick={togglePlay}
-            className="bg-[#508C9B] p-3 sm:px-6 sm:py-2 rounded-lg hover:bg-[#134B70]"
+            title={isPlaying ? "Pause" : "Play"}
+            className="btn-accent p-3 sm:px-6 sm:py-2"
           >
             {isPlaying ? <Pause /> : <Play />}
           </button>
 
           <button
             onClick={nextSong}
-            className="bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600"
+            title="Berikutnya"
+            className="btn px-4 py-2"
           >
             <SkipForward />
           </button>
 
           <button
             onClick={toggleRepeat}
-            className={`px-4 py-2 rounded-lg hover:bg-gray-600 ${
-              repeatMode === "off" ? "bg-gray-700" : "bg-[#508C9B]"
+            title="Repeat"
+            className={`btn px-4 py-2 ${
+              repeatMode === "off" ? "" : "btn-accent"
             }`}
           >
-            {repeatMode === "off" ? (
-              <Repeat />
-            ) : repeatMode === "all" ? (
-              <Repeat />
-            ) : (
-              <Repeat1 />
-            )}
+            {repeatMode === "one" ? <Repeat1 /> : <Repeat />}
           </button>
         </div>
 
@@ -221,15 +292,13 @@ function App() {
               <button
                 key={index}
                 onClick={() => setCurrentSong(index)}
-                className={`w-full text-left p-3 rounded-lg transition ${
-                  currentSong === index
-                    ? "bg-[#134B70]"
-                    : "bg-white/5 hover:bg-white/10"
+                className={`playlist-item w-full text-left p-3 ${
+                  currentSong === index ? "playlist-item-active" : ""
                 }`}
               >
                 <div className="font-medium truncate">{item.title}</div>
 
-                <div className="text-xs sm:text-sm text-gray-300 truncate">
+                <div className="text-xs sm:text-sm opacity-70 truncate">
                   {item.artist}
                 </div>
               </button>
