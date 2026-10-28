@@ -22,10 +22,10 @@ const themes: {
   icon: typeof Sparkles;
   color: string;
 }[] = [
-  { id: "blue", label: "Biru", icon: Waves, color: "#0f172a" },
-  { id: "cute", label: "Lucu", icon: Sparkles, color: "#ffe9f3" },
-  { id: "earth", label: "Bumi", icon: Leaf, color: "#e8efdd" },
-  { id: "mature", label: "Dewasa", icon: Moon, color: "#14161a" },
+  { id: "blue", label: "Wave", icon: Waves, color: "#0f172a" },
+  { id: "cute", label: "Sparkle", icon: Sparkles, color: "#ffe9f3" },
+  { id: "earth", label: "Leaf", icon: Leaf, color: "#e8efdd" },
+  { id: "mature", label: "Moon", icon: Moon, color: "#14161a" },
 ];
 
 const getInitialTheme = (): Theme => {
